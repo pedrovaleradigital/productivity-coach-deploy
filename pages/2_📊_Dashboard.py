@@ -41,7 +41,15 @@ if 'db' not in st.session_state:
 
 # Inicializar dashboard builder
 if 'dashboard' not in st.session_state:
-    st.session_state.dashboard = DashboardBuilder(st.session_state.db)
+    # Obtener nombres de identidad personalizados
+    try:
+        settings = st.session_state.db.get_user_settings()
+        id1 = settings.get('identity_1_name', 'Empresario')
+        id2 = settings.get('identity_2_name', 'Profesional')
+    except:
+        id1, id2 = "Empresario", "Profesional"
+        
+    st.session_state.dashboard = DashboardBuilder(st.session_state.db, id1, id2)
 
 dashboard = st.session_state.dashboard
 

@@ -11,8 +11,10 @@ from typing import Dict, List
 class DashboardBuilder:
     """Constructor de gráficos para el dashboard de productividad"""
 
-    def __init__(self, db_client):
+    def __init__(self, db_client, identity_1_name: str = "Empresario", identity_2_name: str = "Profesional"):
         self.db = db_client  # Supabase client
+        self.id1_name = identity_1_name
+        self.id2_name = identity_2_name
 
     def get_last_7_days_data(self) -> pd.DataFrame:
         """Obtener datos de los últimos 7 días"""
@@ -79,9 +81,9 @@ class DashboardBuilder:
         # Crear gráfico de barras agrupadas
         fig = go.Figure()
 
-        # Daily 3
+        # Daily 3 (Identity 1)
         fig.add_trace(go.Bar(
-            name='Prioridades (AM)',
+            name=f'{self.id1_name} (AM)',
             x=df['date'],
             y=df['daily_3'],
             marker_color='#00D4AA',
@@ -89,9 +91,9 @@ class DashboardBuilder:
             textposition='auto',
         ))
 
-        # Prioridades
+        # Priorities (Identity 2)
         fig.add_trace(go.Bar(
-            name='Prioridades',
+            name=f'{self.id2_name} (PM)',
             x=df['date'],
             y=df['priorities'],
             marker_color='#FF6B6B',
@@ -159,6 +161,19 @@ class DashboardBuilder:
             )
             return fig
 
+        # Traer logs de hábitos dinámicos para sumar
+        try:
+            habit_logs = self.db.get_habit_logs_last_n_days(7)
+            
+            # Agrupar por fecha
+            # Estructura log: {'date_logged': 'YYYY-MM-DD', 'habit_id': ...}
+            habit_counts = {}
+            for log in habit_logs:
+                d = log.get('date_logged')
+                habit_counts[d] = habit_counts.get(d, 0) + 1
+        except:
+            habit_counts = {}
+
         # Calcular porcentaje de completitud por día
         # Asegurar que las columnas existen y son numéricas (redundante pero seguro)
         for col in ['daily_3', 'priorities', 'code_done', 'morning_mastery']:
@@ -166,8 +181,27 @@ class DashboardBuilder:
                 df[col] = 0
             df[col] = pd.to_numeric(df[col])
 
-        df['completion_rate'] = ((df['daily_3'] + df['priorities'] + df['code_done'] * 3 + df['morning_mastery']) / 10) * 100
+        # Crear columna de hábitos dinámicos mapeada por fecha
+        df['dynamic_habits'] = df['date'].map(habit_counts).fillna(0)
 
+        # Fórmula ajustada: (Base (10 pts) + Dynamic Habits) / (10 + Dynamic Habits Max Teórico??)
+        # Para simplificar y no complicar el denominador, sumaremos un "bonus" por hábito
+        # O asumiremos que el usuario tiene X hábitos activos.
+        # Por ahora, mantengamos el denominador base 10 pero permitamos que suba >100% si hacen mucho extra
+        # O mejor, sumemos al numerador y aumentemos denominador ligeramente.
+        
+        # Enfoque: Base tasks valen 10 puntos total. Cada hábito extra vale 1 punto.
+        # Score = (Puntos Obtenidos) / (10 + Puntos Extra Posibles)
+        # Como no sabemos cuántos hábitos "debía" hacer ese día histórico, usaremos un denominador fijo + dinámico
+        # Simplificación para UX: Score = (Base + Habits) / 10 * 100. Puede pasar de 100%, ¡eso motiva!
+        
+        df['total_scorable'] = df['daily_3'] + df['priorities'] + df['code_done'] * 3 + df['morning_mastery'] + df['dynamic_habits']
+        df['completion_rate'] = (df['total_scorable'] / 10) * 100
+        
+        # Cap visual al 100% o dejar que "brille"? Dejemos cap en 100 para heatmap standard, o 110?
+        # Mejor cap en 100 para consistencia visual
+        # df['completion_rate'] = df['completion_rate'].clip(upper=100) 
+        
         # Crear heatmap
         # Importante: z debe ser lista de listas de tipos nativos (int/float), no numpy arrays
         z_values = [df['completion_rate'].fillna(0).tolist()]
@@ -218,7 +252,7 @@ class DashboardBuilder:
 
         # Crear gráfico de dona
         fig = go.Figure(data=[go.Pie(
-            labels=['Identidad #1: Empresario', 'Identidad #2: Profesional'],
+            labels=[f'ID #1: {self.id1_name}', f'ID #2: {self.id2_name}'],
             values=[total_daily_3, total_priorities],
             hole=.4,
             marker_colors=['#00D4AA', '#FF6B6B']

@@ -536,9 +536,29 @@ class SupabaseClient:
 
             return {'success': True, 'streak': new_streak, 'message': f'¡Racha: {new_streak} días!'}
 
+            return {'success': True, 'streak': new_streak, 'message': f'¡Racha: {new_streak} días!'}
+
         except Exception as e:
             print(f"Error marcando hábito: {e}")
             return {'success': False, 'message': str(e)}
+
+    def get_habit_logs_last_n_days(self, days: int = 7) -> List[Dict]:
+        """Obtener logs de hábitos de los últimos N días para el heatmap"""
+        try:
+            today_date = datetime.now(self.timezone).date()
+            start_date = (today_date - timedelta(days=days-1)).isoformat()
+            
+            # Ajuste de query, asegurando formato de fecha sin hora si es 'date_logged' es date
+            # Ojo: date_logged se guarda con _get_today_iso() que es string YYYY-MM-DD
+            response = self.client.table('habit_logs').select('*')\
+                .gte('date_logged', start_date)\
+                .eq('user_id', self.user_id)\
+                .execute()
+                
+            return response.data if response.data else []
+        except Exception as e:
+            print(f"Error obteniendo logs de hábitos: {e}")
+            return []
 
     # --- MORNING MASTERY SETTINGS ---
 

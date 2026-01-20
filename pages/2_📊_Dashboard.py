@@ -128,34 +128,34 @@ with col1:
     # Mensaje de Regla de Oro (Solicitud Usuario)
     st.info("💡 **'Never Miss Twice Rule':** Si pierdes un día está bien, pero nunca pierdas dos días seguidos.")
 
-with col2:
-    st.subheader("⚖️ Balance entre Identidades")
-    balance_chart = dashboard.create_identity_balance_chart()
-    st.plotly_chart(balance_chart, use_container_width=True)
+    with col2:
+        st.subheader("⚖️ Balance entre Identidades")
+        balance_chart = dashboard.create_identity_balance_chart()
+        st.plotly_chart(balance_chart, use_container_width=True, key="balance_chart")
 
-    # Análisis de balance (Mantenido igual)
-    if stats['total_daily_3'] > 0 or stats['total_priorities'] > 0:
-        ratio = stats['total_daily_3'] / max(stats['total_priorities'], 1)
-        if ratio > 1.2:
-            st.warning("⚠️ Más enfoque en Identidad #1 (Empresario). Balancea tus prioridades de tarde.")
-        elif ratio < 0.8:
-            st.warning("⚠️ Más enfoque en Identidad #2 (Profesional). No descuides tu desarrollo personal.")
-        else:
-            st.success("✅ Balance saludable entre ambas identidades")
+        # Análisis de balance (Mantenido igual)
+        if stats['total_daily_3'] > 0 or stats['total_priorities'] > 0:
+            ratio = stats['total_daily_3'] / max(stats['total_priorities'], 1)
+            if ratio > 1.2:
+                st.warning("⚠️ Más enfoque en Identidad #1 (Empresario). Balancea tus prioridades de tarde.")
+            elif ratio < 0.8:
+                st.warning("⚠️ Más enfoque en Identidad #2 (Profesional). No descuides tu desarrollo personal.")
+            else:
+                st.success("✅ Balance saludable entre ambas identidades")
 
-st.divider()
+    st.divider()
 
-# Gráfico de consistencia semanal
-st.subheader("📅 Consistencia Semanal (Ejecución)")
-consistency_chart = dashboard.create_weekly_consistency_chart()
-st.plotly_chart(consistency_chart, use_container_width=True)
+    # Gráfico de consistencia semanal
+    st.subheader("📅 Consistencia Semanal (Ejecución)")
+    consistency_chart = dashboard.create_weekly_consistency_chart()
+    st.plotly_chart(consistency_chart, use_container_width=True, key="consistency_chart")
 
-st.divider()
+    st.divider()
 
-# Mapa de calor
-st.subheader("🔥 Mapa de Calor - Completitud Diaria")
-heatmap = dashboard.create_habit_completion_heatmap()
-st.plotly_chart(heatmap, use_container_width=True)
+    # Mapa de calor
+    st.subheader("🔥 Mapa de Calor - Completitud Diaria")
+    heatmap = dashboard.create_habit_completion_heatmap()
+    st.plotly_chart(heatmap, use_container_width=True, key="heatmap_chart")
 
 # Insights y recomendaciones
 st.divider()

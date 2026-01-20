@@ -58,8 +58,10 @@ class DashboardBuilder:
             return df_complete
 
         except Exception as e:
+            import streamlit as st
             import traceback
             traceback.print_exc()
+            st.error(f"Error cargando datos: {e}")
             print(f"Error al obtener datos: {e}")
             # Retornar DataFrame vacío
             return pd.DataFrame()

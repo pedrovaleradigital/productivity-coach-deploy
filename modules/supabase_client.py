@@ -373,19 +373,26 @@ class SupabaseClient:
             print(f"Error obteniendo user_settings: {e}")
             return {
                 'identity_1_name': 'Empresario Exitoso',
-                'identity_2_name': 'Profesional MarTech'
+                'identity_2_name': 'Profesional MarTech',
+                'timezone': 'America/Caracas'
             }
 
-    def update_user_settings(self, identity_1: str, identity_2: str):
-        """Actualizar nombres de identidades"""
+    def update_user_settings(self, identity_1: str, identity_2: str, timezone: str = None):
+        """Actualizar nombres de identidades y timezone"""
         try:
-            # Upsert (Insert or Update)
-            self.client.table('user_settings').upsert({
+            # Prepare update data
+            data = {
                 'user_id': self.user_id,
                 'identity_1_name': identity_1,
                 'identity_2_name': identity_2,
                 'updated_at': datetime.now().isoformat()
-            }).execute()
+            }
+            
+            if timezone:
+                data['timezone'] = timezone
+
+            # Upsert (Insert or Update)
+            self.client.table('user_settings').upsert(data).execute()
             return True, "Configuración guardada"
         except Exception as e:
             print(f"Error actualizando settings: {e}")

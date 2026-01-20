@@ -1,5 +1,8 @@
 import streamlit as st
 from modules.auth import logout
+from datetime import datetime
+import pytz
+import os
 
 def render_sidebar():
     """Renderiza la barra lateral común con navegación y estado de usuario"""
@@ -9,6 +12,28 @@ def render_sidebar():
     
     with st.sidebar:
         st.header("Productivity Coach")
+
+        # Reloj / Fecha
+        if 'user' in st.session_state:
+            # Obtener timezone
+            tz_name = 'America/Caracas' # Default
+            if 'user_settings' in st.session_state and st.session_state.user_settings:
+                tz_name = st.session_state.user_settings.get('timezone', 'America/Caracas')
+            elif 'db' in st.session_state:
+                 # Intentar cargar si no esta en session (aunque Settings lo carga)
+                 pass
+            
+            try:
+                user_tz = pytz.timezone(tz_name)
+                now = datetime.now(user_tz)
+                date_str = now.strftime("%A, %d %b")
+                time_str = now.strftime("%I:%M %p")
+                
+                st.caption(f"📅 {date_str}") 
+                st.caption(f"🕒 {time_str}")
+                st.divider()
+            except Exception as e:
+                st.error(f"Error hora: {e}")
         
         # Navegación Principal
         st.page_link("app.py", label="Inicio", icon="🏠")

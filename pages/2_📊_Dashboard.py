@@ -57,18 +57,18 @@ habits = st.session_state.db.get_habits()
 # Métricas principales
 st.header("📈 Resumen Semanal")
 
-cols = st.columns(len(habits) + 3) # Daily 3, Priorities, Morning Mastery + Each Habit
+cols = st.columns(len(habits) + 3) # Prioridades (AM), Prioridades (PM), Morning Mastery + Each Habit
 
 with cols[0]:
     st.metric(
-        "Daily 3",
+        "Prioridades (AM)",
         f"{stats['total_daily_3']}/15",
         delta=f"{(stats['total_daily_3']/15*100):.0f}%" if stats['total_daily_3'] > 0 else None
     )
 
 with cols[1]:
     st.metric(
-        "Prioridades",
+        "Prioridades (PM)",
         f"{stats['total_priorities']}/15",
         delta=f"{(stats['total_priorities']/15*100):.0f}%" if stats['total_priorities'] > 0 else None
     )
@@ -155,12 +155,12 @@ for habit in habits:
     elif habit['streak_count'] == 0:
         insights.append(f"🎯 **{habit['name']}:** No rompas la cadena dos veces. Hoy es un buen día para retomar.")
 
-# Insight sobre Daily 3
+# Insight sobre Prioridades AM
 daily_3_rate = (stats['total_daily_3'] / 21) * 100 if stats['total_daily_3'] > 0 else 0
 if daily_3_rate < 60:
-    insights.append("🎯 **Daily 3:** Tu tasa de completitud es baja. Enfócate en tareas más pequeñas y alcanzables")
+    insights.append("🎯 **Prioridades AM:** Tu tasa de completitud es baja. Enfócate en tareas más pequeñas y alcanzables")
 elif daily_3_rate >= 80:
-    insights.append("✅ **Daily 3:** Excelente consistencia en tus tareas matutinas")
+    insights.append("✅ **Prioridades AM:** Excelente consistencia en tus tareas matutinas")
 
 # Insight sobre Morning Mastery
 if stats['morning_mastery_days'] < 3:

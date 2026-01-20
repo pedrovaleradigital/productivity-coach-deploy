@@ -67,7 +67,7 @@ class DashboardBuilder:
 
         # Daily 3
         fig.add_trace(go.Bar(
-            name='Daily 3',
+            name='Prioridades (AM)',
             x=df['date'],
             y=df['daily_3'],
             marker_color='#00D4AA',

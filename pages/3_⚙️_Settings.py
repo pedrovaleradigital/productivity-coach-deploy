@@ -2,6 +2,8 @@
 Página de Configuración
 """
 import streamlit as st
+import time
+import pytz
 import os
 from dotenv import load_dotenv
 from modules.auth import check_authentication, require_authentication
@@ -40,13 +42,21 @@ if 'db' in st.session_state:
         col1, col2 = st.columns(2)
         with col1:
             id1 = st.text_input("Nombre Identidad #1 (Mañana)", value=current_settings.get('identity_1_name', 'Empresario Exitoso'))
+            # Timezone Selector
+            all_timezones = pytz.all_timezones
+            current_tz = current_settings.get('timezone', 'America/Caracas')
+            if current_tz not in all_timezones:
+                current_tz = 'America/Caracas'
+            timezone_idx = all_timezones.index(current_tz)
+            selected_timezone = st.selectbox("Zona Horaria", all_timezones, index=timezone_idx)
+            
         with col2:
             id2 = st.text_input("Nombre Identidad #2 (Tarde)", value=current_settings.get('identity_2_name', 'Profesional MarTech'))
             
-        if st.form_submit_button("Guardar Identidades", use_container_width=True, type="primary"):
-            success, msg = st.session_state.db.update_user_settings(id1, id2)
+        if st.form_submit_button("Guardar Configuración", use_container_width=True, type="primary"):
+            success, msg = st.session_state.db.update_user_settings(id1, id2, selected_timezone)
             if success:
-                st.session_state.user_settings = {'identity_1_name': id1, 'identity_2_name': id2}
+                st.session_state.user_settings = {'identity_1_name': id1, 'identity_2_name': id2, 'timezone': selected_timezone}
                 st.success(msg)
                 time.sleep(1)
                 st.rerun()

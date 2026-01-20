@@ -45,12 +45,13 @@ class DashboardBuilder:
             all_dates = pd.date_range(start=start_date, end=today_tz, freq='D')
             df_complete = pd.DataFrame({'date': all_dates.strftime('%Y-%m-%d')})
             
-            # Merge y fillna
-            df_complete = df_complete.merge(df, on='date', how='left')
-            
             # Rellenar valores nulos con 0 para métricas numéricas
             cols_to_fill = ['daily_3', 'priorities', 'code_done', 'morning_mastery']
             df_complete[cols_to_fill] = df_complete[cols_to_fill].fillna(0)
+            
+            # Asegurar tipos numéricos explícitos para evitar errores de concatenación o cálculo
+            for col in cols_to_fill:
+                df_complete[col] = pd.to_numeric(df_complete[col])
             
             return df_complete
 
@@ -159,23 +160,33 @@ class DashboardBuilder:
             return fig
 
         # Calcular porcentaje de completitud por día
+        # Asegurar que las columnas existen y son numéricas (redundante pero seguro)
+        for col in ['daily_3', 'priorities', 'code_done', 'morning_mastery']:
+            if col not in df.columns:
+                df[col] = 0
+            df[col] = pd.to_numeric(df[col])
+
         df['completion_rate'] = ((df['daily_3'] + df['priorities'] + df['code_done'] * 3 + df['morning_mastery']) / 10) * 100
 
         # Crear heatmap
+        # Importante: z debe ser lista de listas de tipos nativos (int/float), no numpy arrays
+        z_values = [df['completion_rate'].fillna(0).tolist()]
+        
         fig = go.Figure(data=go.Heatmap(
-            z=[df['completion_rate'].values],
-            x=df['date'],
+            z=z_values,
+            x=df['date'].tolist(),
             y=['Completitud'],
             colorscale=[
                 [0, '#FF6B6B'],      # Rojo para baja completitud
                 [0.5, '#FFD93D'],    # Amarillo para media
                 [1, '#00D4AA']       # Verde para alta completitud
             ],
-            text=[[f"{val:.0f}%" for val in df['completion_rate'].values]],
+            text=[[f"{val:.0f}%" for val in z_values[0]]],
             texttemplate="%{text}",
             textfont={"size": 14},
             colorbar=dict(title="% Completado"),
-            hovertemplate='%{x}<br>Completitud: %{z:.0f}%<extra></extra>'
+            hovertemplate='%{x}<br>Completitud: %{z:.0f}%<extra></extra>',
+            zmin=0, zmax=100
         ))
 
         fig.update_layout(

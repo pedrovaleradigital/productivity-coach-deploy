@@ -187,17 +187,3 @@ st.caption("💡 **Recuerda:** La consistencia importa más que la perfección. 
 from modules.ui_components import render_sidebar_footer
 render_sidebar_footer()
 
-# --- DEBUG SECTION ---
-# Solo visible si se activa en sidebar o hay errores
-if st.sidebar.checkbox("🛠️ Ver Datos Crudos (Debug)", key="debug_toggle"):
-    st.divider()
-    st.subheader("🛠️ Debugging Zone")
-    st.write(f"**Timezone del Cliente:** {st.session_state.db.timezone}")
-    
-    try:
-        raw_df = dashboard.get_last_7_days_data()
-        st.write("DataFrame del Heatmap:")
-        st.dataframe(raw_df)
-    except Exception as e:
-        st.error(f"Error cargando DataFrame: {e}")
-

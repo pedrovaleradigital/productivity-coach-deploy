@@ -35,7 +35,7 @@ st.header("1. 🎙️ Rob Dial - The Mindset Mentor")
 col1, col2 = st.columns([1, 2])
 
 with col1:
-    st.image("https://m.media-amazon.com/images/I/41D2vXp7CGL._SL500_.jpg", width=200)
+    st.image("assets/images/rob_dial.png", width=200, caption="The Mindset Mentor")
 
 with col2:
     st.subheader("Conceptos Aplicados")
@@ -63,7 +63,7 @@ st.header("2. 🔥 Cal Newport - Deep Work")
 col1, col2 = st.columns([1, 2])
 
 with col1:
-    st.image("https://covers.openlibrary.org/b/id/8394677-L.jpg", width=200)
+    st.image("assets/images/cal_newport.png", width=200, caption="Deep Work")
 
 with col2:
     st.subheader("Conceptos Aplicados")
@@ -91,6 +91,7 @@ col1, col2 = st.columns([1, 2])
 
 with col1:
     st.markdown("### 🎥 Video Essay")
+    st.image("assets/images/systems_vs_willpower.png", width=200, caption="Systems > Willpower")
     st.write("**Sistema vs Voluntad**")
     st.caption("Análisis de hábitos de alto rendimiento")
 
@@ -119,7 +120,7 @@ st.header("4. 🌅 Brian Tracy - Mentalidad de Ganador")
 col1, col2 = st.columns([1, 2])
 
 with col1:
-    st.image("https://covers.openlibrary.org/b/id/8258957-L.jpg", width=200)
+    st.image("assets/images/brian_tracy.png", width=200, caption="Mentalidad de Ganador")
 
 with col2:
     st.subheader("Conceptos Aplicados")
@@ -141,10 +142,14 @@ st.divider()
 
 # James Clear (Mantenido como referencia base)
 st.header("5. 📖 James Clear - Atomic Habits (Base Teórica)")
-st.markdown("""
-*Aunque los conceptos específicos anteriores vienen de los videos analizados, **Atomic Habits** provee el vocabulario base (Identidad, Sistemas) que une todo.*
-""")
-st.markdown("- **Identity-Based Habits:** Cada acción es un voto por la persona que quieres ser.")
+col1, col2 = st.columns([1, 2])
+with col1:
+    st.image("assets/images/james_clear.png", width=200, caption="Atomic Habits")
+with col2:
+    st.markdown("""
+    *Aunque los conceptos específicos anteriores vienen de los videos analizados, **Atomic Habits** provee el vocabulario base (Identidad, Sistemas) que une todo.*
+    """)
+    st.markdown("- **Identity-Based Habits:** Cada acción es un voto por la persona que quieres ser.")
 
 st.divider()
 

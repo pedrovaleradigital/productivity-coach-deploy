@@ -32,15 +32,26 @@ class DashboardBuilder:
                     'morning_mastery': 1 if record.get('morning_mastery_done', False) else 0
                 })
 
-            df = pd.DataFrame(data)
+            if not data:
+                df = pd.DataFrame(columns=['date', 'day', 'daily_3', 'priorities', 'code_done', 'morning_mastery'])
+            else:
+                df = pd.DataFrame(data)
 
-            # Asegurar que tenemos todos los 7 días
-            end_date = date.today()
-            start_date = end_date - timedelta(days=6)
-            all_dates = pd.date_range(start=start_date, end=end_date, freq='D')
+            # Asegurar que tenemos todos los 7 días (Timezone Aware)
+            # Usar datetime.now(tz) para obtener la fecha correcta del usuario
+            today_tz = datetime.now(self.db.timezone).date()
+            start_date = today_tz - timedelta(days=6)
+            
+            all_dates = pd.date_range(start=start_date, end=today_tz, freq='D')
             df_complete = pd.DataFrame({'date': all_dates.strftime('%Y-%m-%d')})
-            df_complete = df_complete.merge(df, on='date', how='left').fillna(0)
-
+            
+            # Merge y fillna
+            df_complete = df_complete.merge(df, on='date', how='left')
+            
+            # Rellenar valores nulos con 0 para métricas numéricas
+            cols_to_fill = ['daily_3', 'priorities', 'code_done', 'morning_mastery']
+            df_complete[cols_to_fill] = df_complete[cols_to_fill].fillna(0)
+            
             return df_complete
 
         except Exception as e:

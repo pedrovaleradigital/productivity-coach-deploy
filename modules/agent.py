@@ -31,7 +31,7 @@ class ProductivityAgent:
     def _load_system_prompt(self) -> str:
         """Cargar el prompt del sistema desde productivity-coach.md"""
         prompt_path = os.path.join(
-            os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+            os.path.dirname(os.path.dirname(__file__)), # Root del proyecto
             '.agent',
             'workflows',
             'productivity-coach.md'

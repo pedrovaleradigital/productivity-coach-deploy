@@ -254,7 +254,7 @@ with col1:
                 label_prefix,
                 value=current_text_val,
                 key=f"d3_text_{i}",
-                placeholder=placeholder_text if not is_task_locked else "🔒 Completa la tarea anterior primero",
+                placeholder=placeholder_text if not is_task_locked else "🔒 Guarda la tarea anterior primero",
                 help="[Mínimo No Negociable]: Define la versión ridículamente pequeña de la tarea para eliminar la resistencia de inicio.",
                 disabled=is_task_locked
             )
@@ -337,7 +337,7 @@ with col1:
                 label_prefix,
                 value=current_text_val,
                 key=f"p_text_{i}",
-                placeholder=placeholder_text if not is_task_locked else "🔒 Completa la tarea anterior primero",
+                placeholder=placeholder_text if not is_task_locked else "🔒 Guarda la tarea anterior primero",
                 help="[Mínimo No Negociable]: Define la versión ridículamente pequeña de la tarea.",
                 disabled=is_task_locked
             )

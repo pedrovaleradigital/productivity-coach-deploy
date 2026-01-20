@@ -46,17 +46,31 @@ if not check_authentication():
 # Inicializar clientes en session_state (solo si está autenticado)
 if 'db' not in st.session_state:
     user_id = st.session_state.user.get('id')
-    st.session_state.db = SupabaseClient(
+    # 1. Inicializar cliente temporal
+    temp_client = SupabaseClient(
         url=os.getenv('SUPABASE_URL'),
         key=os.getenv('SUPABASE_KEY'),
         user_id=user_id
     )
+    
+    # 2. Obtener timezone del usuario
+    settings = temp_client.get_user_settings()
+    user_tz = settings.get('timezone', os.getenv('TIMEZONE', 'America/Caracas'))
+    
+    # 3. Configurar timezone correcto
+    temp_client.set_timezone(user_tz)
+    
+    # 4. Guardar en session_state
+    st.session_state.db = temp_client
 
 if 'agent' not in st.session_state:
+    # Obtener timezone ya configurado en el cliente DB
+    current_tz = str(st.session_state.db.timezone.zone)
+    
     st.session_state.agent = ProductivityAgent(
         api_key=os.getenv('ANTHROPIC_API_KEY'),
         db_client=st.session_state.db,
-        timezone=os.getenv('TIMEZONE', 'America/Caracas')
+        timezone=current_tz
     )
 
 # Obtener contexto actual
@@ -222,7 +236,7 @@ with col1:
         
         # Etiqueta especial para Tarea 1 (Eat the frog)
         label_prefix = "🐸 EAT THE FROG" if i == 0 else f"Tarea {i+1}"
-        placeholder_text = "Mínimo No Negociable: Versión ridículamente pequeña..." if i == 0 else "Ej: Diseñar oferta..."
+        placeholder_text = "Tarea que sea Mínimo No Negociable: Versión ridículamente pequeña..." if i == 0 else "Ej: Diseñar oferta..."
         
         # Obtener valor actual del input (estado Session State o DB)
         current_text_val = d3_details[i].get('text', '')

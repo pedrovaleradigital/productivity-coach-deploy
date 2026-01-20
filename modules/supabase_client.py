@@ -2,21 +2,39 @@
 Cliente de Supabase para gestionar datos del Productivity Coach
 """
 from supabase import create_client, Client
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 import json
+import pytz
 from typing import Dict, List, Optional
 
 
 class SupabaseClient:
     """Cliente para interactuar con Supabase"""
 
-    def __init__(self, url: str, key: str, user_id: str):
+    def __init__(self, url: str, key: str, user_id: str, timezone: str = 'America/Caracas'):
         self.client: Client = create_client(url, key)
         self.user_id = user_id
+        try:
+            self.timezone = pytz.timezone(timezone)
+        except:
+            self.timezone = pytz.timezone('America/Caracas')
+
+    def set_timezone(self, timezone: str):
+        """Actualizar timezone del cliente"""
+        try:
+            self.timezone = pytz.timezone(timezone)
+        except:
+            pass # Mantener anterior si falla
+
+    def _get_today_iso(self) -> str:
+        """Obtener fecha actual en formato ISO respetando timezone"""
+        return datetime.now(self.timezone).date().isoformat()
+
 
     def get_today_tracking(self) -> Dict:
         """Obtener tracking del día actual"""
-        today = date.today().isoformat()
+        today = self._get_today_iso()
+
 
         try:
             # Buscar registro de hoy para este usuario
@@ -56,7 +74,7 @@ class SupabaseClient:
         Actualizar Daily 3 (Texto + Estado)
         tasks_data: Lista de dicts [{'text': str, 'done': bool}]
         """
-        today = date.today().isoformat()
+        today = self._get_today_iso()
         
         # Calcular derivadas para mantener compatibilidad
         completed_count = sum(1 for t in tasks_data if t.get('done', False))
@@ -81,7 +99,7 @@ class SupabaseClient:
         Actualizar Prioridades (Texto + Estado)
         priorities_data: Lista de dicts [{'text': str, 'done': bool}]
         """
-        today = date.today().isoformat()
+        today = self._get_today_iso()
         
         # Calcular derivadas
         completed_count = sum(1 for p in priorities_data if p.get('done', False))
@@ -103,7 +121,8 @@ class SupabaseClient:
 
     def mark_code_done(self, commit_time: Optional[str] = None):
         """Marcar código como completado"""
-        today = date.today().isoformat()
+        today = self._get_today_iso()
+
 
         if commit_time is None:
             commit_time = datetime.now().strftime('%H:%M')
@@ -126,7 +145,8 @@ class SupabaseClient:
 
     def mark_morning_mastery_done(self):
         """Marcar Morning Mastery como completado"""
-        today = date.today().isoformat()
+        today = self._get_today_iso()
+
 
         try:
             # Asegurar que existe el registro
@@ -187,8 +207,9 @@ class SupabaseClient:
                 self.client.table('habit_streaks').update({
                     'current_streak': new_streak,
                     'longest_streak': new_longest,
-                    'last_activity_date': date.today().isoformat(),
+                    'last_activity_date': self._get_today_iso(),
                     'total_completions': total_completions + 1
+
                 }).eq('habit_name', 'Código').eq('user_id', self.user_id).execute()
             else:
                 # Si no existe, crear registro inicial (Racha = 1 porque acabamos de cumplir)
@@ -197,8 +218,9 @@ class SupabaseClient:
                     'habit_name': 'Código',
                     'current_streak': 1,
                     'longest_streak': 1,
-                    'last_activity_date': date.today().isoformat(),
+                    'last_activity_date': self._get_today_iso(),
                     'total_completions': 1,
+
                     'consistency_rate': 100.0
                 }).execute()
 
@@ -226,16 +248,19 @@ class SupabaseClient:
                 'task_name': task_name,
                 'timer_type': timer_type,
                 'duration_minutes': duration_minutes,
-                'completed_at': datetime.now().isoformat(),
-                'date': date.today().isoformat()
+                'duration_minutes': duration_minutes,
+                'completed_at': datetime.now(self.timezone).isoformat(),
+                'date': self._get_today_iso()
             }).execute()
+
 
         except Exception as e:
             print(f"Error al guardar focus session: {e}")
 
     def get_focus_sessions_today(self) -> List[Dict]:
         """Obtener sesiones de focus del día"""
-        today = date.today().isoformat()
+        today = self._get_today_iso()
+
 
         try:
             response = self.client.table('focus_sessions').select('*')\
@@ -259,8 +284,9 @@ class SupabaseClient:
         """Calcular stats semanales manualmente (fallback con filtro de usuario)"""
         try:
             # Obtener últimos 7 días
-            from datetime import timedelta
-            start_date = (date.today() - timedelta(days=6)).isoformat()
+            today_date = datetime.now(self.timezone).date()
+            start_date = (today_date - timedelta(days=6)).isoformat()
+
 
             response = self.client.table('daily_tracking').select('*')\
                 .gte('date', start_date)\
@@ -306,8 +332,9 @@ class SupabaseClient:
     def get_last_n_days_tracking(self, days: int = 7) -> List[Dict]:
         """Obtener tracking de los últimos N días"""
         try:
-            from datetime import timedelta
-            start_date = (date.today() - timedelta(days=days-1)).isoformat()
+            today_date = datetime.now(self.timezone).date()
+            start_date = (today_date - timedelta(days=days-1)).isoformat()
+
 
             response = self.client.table('daily_tracking').select('*')\
                 .gte('date', start_date)\
@@ -396,6 +423,8 @@ class SupabaseClient:
             return True, "Configuración guardada"
         except Exception as e:
             print(f"Error actualizando settings: {e}")
+            return False, str(e)
+
     # --- MÉTODOS DE HÁBITOS GENÉRICOS (Fase 3) ---
 
     def create_habit(self, name: str) -> bool:
@@ -463,12 +492,21 @@ class SupabaseClient:
             if not habit:
                 return {'success': False, 'message': 'Hábito no encontrado'}
 
-            today = date.today()
+            today = datetime.now(self.timezone).date()
             last_completed_str = habit.get('last_completed_at')
             
             if last_completed_str:
-                last_date = datetime.fromisoformat(last_completed_str.replace('Z', '+00:00')).date()
+                # Truncar zona horaria si viene en formato Z simple o manejarlo mejor
+                # Simplificación: Convertir la fecha string a fecha (ignorando hora exacta para calculo de dias)
+                try:
+                    last_date_dt = datetime.fromisoformat(last_completed_str.replace('Z', '+00:00'))
+                    # Ajustar a zona horaria del usuario si fuera necesario, pero la fecha simple basta
+                    last_date = last_date_dt.date()
+                except:
+                    last_date = datetime.fromisoformat(last_completed_str).date()
+
                 delta_days = (today - last_date).days
+
                 
                 if delta_days == 0:
                     return {'success': True, 'message': 'Ya completado hoy', 'streak': habit['streak_count']}
@@ -480,8 +518,9 @@ class SupabaseClient:
                 new_streak = 1 # Primer día
 
             # Actualizar hábito
-            now_iso = datetime.now().isoformat()
+            now_iso = datetime.now(self.timezone).isoformat()
             self.client.table('habits').update({
+
                 'streak_count': new_streak,
                 'last_completed_at': now_iso
             }).eq('id', habit_id).execute()
@@ -491,7 +530,8 @@ class SupabaseClient:
                 'habit_id': habit_id,
                 'user_id': self.user_id,
                 'completed_at': now_iso,
-                'date_logged': today.isoformat()
+                'date_logged': self._get_today_iso()
+
             }).execute()
 
             return {'success': True, 'streak': new_streak, 'message': f'¡Racha: {new_streak} días!'}

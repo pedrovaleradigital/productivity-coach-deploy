@@ -215,25 +215,23 @@ class DashboardBuilder:
             z=z_values,
             x=df['date'].tolist(),
             y=['Completitud'],
-            colorscale=[
-                [0, '#FF6B6B'],      # Rojo para baja completitud
-                [0.5, '#FFD93D'],    # Amarillo para media
-                [1, '#00D4AA']       # Verde para alta completitud
-            ],
+            colorscale='RdYlGn',     # Escala estándar Red-Yellow-Green
             text=[[f"{val:.0f}%" for val in z_values[0]]],
             texttemplate="%{text}",
-            textfont={"size": 14},
+            textfont={"size": 14, "color": "white"}, # Forzar texto blanco
             colorbar=dict(title="% Completado"),
             hovertemplate='%{x}<br>Completitud: %{z:.0f}%<extra></extra>',
-            zmin=0, zmax=100
+            zmin=0, zmax=100,
+            xgap=3, # Separación entre celdas
+            ygap=3
         ))
 
         fig.update_layout(
             title='Mapa de Calor - Completitud Diaria',
             xaxis_title='Fecha',
             height=200,
-            plot_bgcolor='rgba(0,0,0,0)',
-            paper_bgcolor='rgba(0,0,0,0)',
+            # plot_bgcolor='rgba(0,0,0,0)', # Comentado para ver si ayuda el contraste
+            # paper_bgcolor='rgba(0,0,0,0)',
         )
 
         return fig

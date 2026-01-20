@@ -47,6 +47,9 @@ class DashboardBuilder:
             all_dates = pd.date_range(start=start_date, end=today_tz, freq='D')
             df_complete = pd.DataFrame({'date': all_dates.strftime('%Y-%m-%d')})
             
+            # Merge y fillna
+            df_complete = df_complete.merge(df, on='date', how='left')
+
             # Rellenar valores nulos con 0 para métricas numéricas
             cols_to_fill = ['daily_3', 'priorities', 'code_done', 'morning_mastery']
             df_complete[cols_to_fill] = df_complete[cols_to_fill].fillna(0)

@@ -60,25 +60,25 @@ if 'db' in st.session_state:
 
             success, msg = st.session_state.db.update_user_settings(id1, id2, selected_timezone)
             if success:
-                st.session_state.user_settings = {'identity_1_name': id1, 'identity_2_name': id2, 'timezone': selected_timezone}
-
-                # Si cambió la timezone, limpiar session_state para forzar recarga completa
+                # Si cambió la timezone, limpiar TODO el session_state relevante
                 if timezone_changed:
-                    st.session_state.db.set_timezone(selected_timezone)
-                    # Limpiar datos de tracking en memoria para que se recarguen con la nueva fecha
-                    if 'agent' in st.session_state:
-                        del st.session_state['agent']
-                    if 'db' in st.session_state:
-                        del st.session_state['db']
+                    # Limpiar todos los datos en memoria para forzar recarga completa
+                    keys_to_delete = ['agent', 'db', 'user_settings', 'habits_list']
+                    for key in keys_to_delete:
+                        if key in st.session_state:
+                            del st.session_state[key]
+
                     st.success("✅ Zona horaria actualizada. Recargando sistema...")
-                    time.sleep(1.5)
-                    # Usar JavaScript para hacer refresh completo de la página
+                    time.sleep(1)
+                    # Usar meta refresh para recargar completamente la app
                     st.markdown(
                         """<meta http-equiv="refresh" content="0; url=/" />""",
                         unsafe_allow_html=True
                     )
                     st.stop()
                 else:
+                    # Solo actualizar settings sin recargar todo
+                    st.session_state.user_settings = {'identity_1_name': id1, 'identity_2_name': id2, 'timezone': selected_timezone}
                     st.success(msg)
                     time.sleep(1)
                     st.rerun()

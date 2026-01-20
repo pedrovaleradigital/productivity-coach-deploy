@@ -173,7 +173,7 @@ id2_name = user_settings.get('identity_2_name', 'Profesional MarTech')
 col1, col2 = st.columns([3, 1])
 
 with col1:
-    st.header("🎯 Tracking Rápido")
+    st.header("⚡ Tracking Rápido")
 
     # CONTEXTO ESTRATÉGICO (Nuevo Expander)
     with st.expander("🧠 Estrategia: Protocolo 3x60 & Diseño Ambiental"):
@@ -229,51 +229,57 @@ with col1:
         
         st.session_state.db.update_daily_3(current_data)
 
-    # Construir UI
+    # Construir UI con desbloqueo progresivo
     d3_inputs = []
+    morning_feedback = st.session_state.agent.get_task_feedback("morning")
+
     for i in range(3):
         c1, c2 = st.columns([0.05, 0.95])
-        
+
         # Etiqueta especial para Tarea 1 (Eat the frog)
         label_prefix = "Tarea 1 (🐸 EAT THE FROG)" if i == 0 else f"Tarea {i+1}"
         placeholder_text = "Ej: Diseñar oferta... (Tarea que sea Mínimo No Negociable)"
-        
+
         # Obtener valor actual del input (estado Session State o DB)
         current_text_val = d3_details[i].get('text', '')
-        
+
+        # Desbloqueo progresivo: Tarea i solo habilitada si tarea i-1 tiene texto guardado
+        is_task_locked = False
+        if i > 0:
+            prev_task_text = d3_details[i-1].get('text', '').strip()
+            is_task_locked = len(prev_task_text) == 0
+
         with c2:
             text_val = st.text_input(
-                label_prefix, 
-                value=current_text_val, 
-                key=f"d3_text_{i}", 
-                placeholder=placeholder_text,
-                help="[Mínimo No Negociable]: Define la versión ridículamente pequeña de la tarea para eliminar la resistencia de inicio."
+                label_prefix,
+                value=current_text_val,
+                key=f"d3_text_{i}",
+                placeholder=placeholder_text if not is_task_locked else "🔒 Completa la tarea anterior primero",
+                help="[Mínimo No Negociable]: Define la versión ridículamente pequeña de la tarea para eliminar la resistencia de inicio.",
+                disabled=is_task_locked
             )
-            
+
         with c1:
-            st.write("") 
-            st.write("") 
-            # AUTO-SAVE ACTIVADO con on_change
-            # Disable si texto vacío (Anti-Fake Progress)
-            is_disabled = len(text_val.strip()) == 0
-            
+            st.write("")
+            st.write("")
+            # Disable checkbox si texto vacío o tarea bloqueada
+            is_disabled = len(text_val.strip()) == 0 or is_task_locked
+
             is_done = st.checkbox(
-                "Done", 
-                value=d3_details[i].get('done', False), 
-                key=f"d3_check_{i}", 
+                "Done",
+                value=d3_details[i].get('done', False),
+                key=f"d3_check_{i}",
                 label_visibility="collapsed",
                 on_change=auto_save_daily_3,
                 disabled=is_disabled
             )
-        
+
         d3_inputs.append({"text": text_val, "done": is_done})
 
-    # Mostrar feedback existente debajo de cada tarea
-    morning_feedback = st.session_state.agent.get_task_feedback("morning")
-    for i, fb in enumerate(morning_feedback):
-        if fb and i < len(d3_inputs) and d3_inputs[i].get('text', '').strip():
+        # Mostrar feedback justo debajo de cada tarea (en orden)
+        if i < len(morning_feedback) and morning_feedback[i] and current_text_val.strip():
             st.markdown(f"""<div style="background-color: #1a3a2a; padding: 10px; border-radius: 8px; margin-bottom: 10px; border-left: 3px solid #4ade80;">
-<span style="color: #4ade80; font-weight: bold;">Productivity Coach:</span> <em style="color: #a7f3d0;">{fb}</em>
+<span style="color: #4ade80; font-weight: bold;">Productivity Coach [Tarea #{i+1}]:</span> <em style="color: #a7f3d0;">{morning_feedback[i]}</em>
 </div>""", unsafe_allow_html=True)
 
     if st.button("Guardar Prioridades Mañana", use_container_width=True):
@@ -308,45 +314,55 @@ with col1:
             current_data.append({"text": text_val, "done": is_done})
         st.session_state.db.update_priorities(current_data)
 
+    # Construir UI con desbloqueo progresivo
     p_inputs = []
+    afternoon_feedback = st.session_state.agent.get_task_feedback("afternoon")
+
     for i in range(3):
         c1, c2 = st.columns([0.05, 0.95])
 
         label_prefix = "Tarea 1 (🐸 EAT THE FROG)" if i == 0 else f"Tarea {i+1}"
+        placeholder_text = "Ej: Configurar campaña... (Tarea que sea Mínimo No Negociable)"
 
         current_text_val = p_details[i].get('text', '')
+
+        # Desbloqueo progresivo: Tarea i solo habilitada si tarea i-1 tiene texto guardado
+        is_task_locked = False
+        if i > 0:
+            prev_task_text = p_details[i-1].get('text', '').strip()
+            is_task_locked = len(prev_task_text) == 0
 
         with c2:
             text_val = st.text_input(
                 label_prefix,
                 value=current_text_val,
                 key=f"p_text_{i}",
-                placeholder="Ej: Configurar campaña... (Tarea que sea Mínimo No Negociable)",
-                help="[Mínimo No Negociable]: Define la versión ridículamente pequeña de la tarea."
+                placeholder=placeholder_text if not is_task_locked else "🔒 Completa la tarea anterior primero",
+                help="[Mínimo No Negociable]: Define la versión ridículamente pequeña de la tarea.",
+                disabled=is_task_locked
             )
 
         with c1:
-            st.write("") 
             st.write("")
-            is_disabled = len(text_val.strip()) == 0
-            
+            st.write("")
+            # Disable checkbox si texto vacío o tarea bloqueada
+            is_disabled = len(text_val.strip()) == 0 or is_task_locked
+
             is_done = st.checkbox(
-                "Done", 
-                value=p_details[i].get('done', False), 
-                key=f"p_check_{i}", 
+                "Done",
+                value=p_details[i].get('done', False),
+                key=f"p_check_{i}",
                 label_visibility="collapsed",
                 on_change=auto_save_priorities,
                 disabled=is_disabled
             )
-        
+
         p_inputs.append({"text": text_val, "done": is_done})
 
-    # Mostrar feedback existente debajo de cada tarea
-    afternoon_feedback = st.session_state.agent.get_task_feedback("afternoon")
-    for i, fb in enumerate(afternoon_feedback):
-        if fb and i < len(p_inputs) and p_inputs[i].get('text', '').strip():
+        # Mostrar feedback justo debajo de cada tarea (en orden)
+        if i < len(afternoon_feedback) and afternoon_feedback[i] and current_text_val.strip():
             st.markdown(f"""<div style="background-color: #1a3a2a; padding: 10px; border-radius: 8px; margin-bottom: 10px; border-left: 3px solid #4ade80;">
-<span style="color: #4ade80; font-weight: bold;">Productivity Coach:</span> <em style="color: #a7f3d0;">{fb}</em>
+<span style="color: #4ade80; font-weight: bold;">Productivity Coach [Tarea #{i+1}]:</span> <em style="color: #a7f3d0;">{afternoon_feedback[i]}</em>
 </div>""", unsafe_allow_html=True)
 
     if st.button("Guardar Prioridades Tarde", use_container_width=True):

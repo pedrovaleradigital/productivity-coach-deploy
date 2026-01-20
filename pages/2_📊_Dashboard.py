@@ -152,10 +152,10 @@ with col1:
 
     st.divider()
 
-    # Mapa de calor
-    st.subheader("🔥 Mapa de Calor - Completitud Diaria")
-    heatmap = dashboard.create_habit_completion_heatmap()
-    st.plotly_chart(heatmap, use_container_width=True, key="heatmap_chart")
+    # Mapa de calor (Deshabilitado por solicitud del usuario)
+    # st.subheader("🔥 Mapa de Calor - Completitud Diaria")
+    # heatmap = dashboard.create_habit_completion_heatmap()
+    # st.plotly_chart(heatmap, use_container_width=True, key="heatmap_chart")
 
 # Insights y recomendaciones
 st.divider()

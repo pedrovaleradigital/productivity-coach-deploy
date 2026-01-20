@@ -26,6 +26,13 @@ if 'db' not in st.session_state:
             os.getenv('SUPABASE_KEY'),
             st.session_state.user['id']
         )
+        # Inicializar timezone también aquí
+        try:
+            settings = st.session_state.db.get_user_settings()
+            user_tz = settings.get('timezone', os.getenv('TIMEZONE', 'America/Caracas'))
+            st.session_state.db.set_timezone(user_tz)
+        except:
+            pass
     else:
         st.warning("⚠️ Debes pasar por la página principal primero para inicializar el sistema.")
         if st.button("🏠 Ir al Inicio"):
@@ -179,3 +186,18 @@ st.caption("💡 **Recuerda:** La consistencia importa más que la perfección. 
 
 from modules.ui_components import render_sidebar_footer
 render_sidebar_footer()
+
+# --- DEBUG SECTION ---
+# Solo visible si se activa en sidebar o hay errores
+if st.sidebar.checkbox("🛠️ Ver Datos Crudos (Debug)", key="debug_toggle"):
+    st.divider()
+    st.subheader("🛠️ Debugging Zone")
+    st.write(f"**Timezone del Cliente:** {st.session_state.db.timezone}")
+    
+    try:
+        raw_df = dashboard.get_last_7_days_data()
+        st.write("DataFrame del Heatmap:")
+        st.dataframe(raw_df)
+    except Exception as e:
+        st.error(f"Error cargando DataFrame: {e}")
+

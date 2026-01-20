@@ -312,27 +312,40 @@ RACHA DE CÓDIGO: {context['code_streak']} días
                 feedbacks.append("")
                 continue
 
-            # Construir prompt para analizar la tarea
-            analysis_prompt = f"""Analiza esta tarea y da feedback breve (máximo 2 oraciones):
+            # Construir prompt para analizar la tarea usando la misma filosofía del sistema
+            analysis_prompt = f"""Analiza esta tarea según el concepto de "Mínimo No Negociable" (Rob Dial):
 
 Tarea: "{task_text}"
 
-Criterios:
-1. Si parece que se puede completar en menos de 30 minutos: felicita porque cumple con ser "ridículamente pequeña" (Mínimo No Negociable).
-2. Si parece que tomará entre 30-60 minutos: sugiere que reserve un espacio sin distracciones para concentrarse.
-3. Si parece que tomará más de 1 hora: sugiere cómo dividirla en partes más pequeñas y cuál hacer primero.
+## Concepto Clave:
+El "Mínimo No Negociable" es la versión RIDÍCULAMENTE PEQUEÑA de una tarea, diseñada para eliminar la resistencia inicial. Debe cumplir estos criterios:
+- Tomar máximo 2-5 minutos
+- Estar 100% bajo tu control (no depender de terceros, horarios externos, etc.)
+- Ser algo que puedas hacer AHORA MISMO sin preparación
+
+## Ejemplos:
+- ✅ "Abrir el documento y escribir el título" (ridículamente pequeña)
+- ✅ "Hacer 1 llamada de prospección" (acción concreta bajo tu control)
+- ❌ "Ir a cita médica" (compromiso externo, no está bajo tu control total)
+- ❌ "Diseñar toda la oferta" (demasiado grande, genera resistencia)
+
+## Tu Feedback:
+1. Si la tarea ES ridículamente pequeña y bajo control del usuario: felicita brevemente.
+2. Si la tarea es una acción concreta pero podría ser más pequeña: sugiere la versión mini.
+3. Si la tarea es un compromiso externo (citas, reuniones, etc.): indica que es un "compromiso agendado", no un Mínimo No Negociable, y está bien tenerlo pero no confundirlo con el concepto.
+4. Si la tarea es muy grande: sugiere dividirla y di cuál sería el primer micro-paso.
 
 IMPORTANTE:
 - Responde SOLO con el feedback, sin prefijos ni etiquetas
 - Usa máximo 2 oraciones
 - Incluye 1 emoji relevante
-- Sé específico sobre la tarea mencionada"""
+- Sé específico y honesto"""
 
             try:
                 response = self.client.messages.create(
                     model=self.model,
-                    max_tokens=200,
-                    system="Eres un coach de productividad conciso y directo. Responde solo con el feedback solicitado.",
+                    max_tokens=250,
+                    system="Eres Productivity Coach, un coach de productividad directo y pragmático. Tu filosofía: Sistemas > Fuerza de Voluntad. Aplica el concepto de Mínimo No Negociable con precisión.",
                     messages=[{"role": "user", "content": analysis_prompt}]
                 )
                 feedback = response.content[0].text.strip()

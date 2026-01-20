@@ -579,3 +579,39 @@ class SupabaseClient:
         except Exception as e:
             print(f"Error actualizando Morning Mastery: {e}")
             return False
+
+    # --- TASK FEEDBACK METHODS ---
+
+    def save_task_feedback(self, feedbacks: List[str], period: str = "morning") -> bool:
+        """Guardar feedback de tareas en daily_tracking"""
+        today = self._get_today_iso()
+        column_name = 'identity_1_feedback' if period == 'morning' else 'identity_2_feedback'
+
+        try:
+            self.get_today_tracking()  # Asegurar que existe el registro
+            self.client.table('daily_tracking').update({
+                column_name: feedbacks
+            }).eq('date', today).eq('user_id', self.user_id).execute()
+            return True
+        except Exception as e:
+            print(f"Error guardando feedback: {e}")
+            return False
+
+    def get_task_feedback(self, period: str = "morning") -> List[str]:
+        """Obtener feedback guardado de tareas"""
+        today = self._get_today_iso()
+        column_name = 'identity_1_feedback' if period == 'morning' else 'identity_2_feedback'
+
+        try:
+            response = self.client.table('daily_tracking').select(column_name)\
+                .eq('date', today)\
+                .eq('user_id', self.user_id)\
+                .execute()
+
+            if response.data and len(response.data) > 0:
+                feedback = response.data[0].get(column_name)
+                return feedback if feedback else ["", "", ""]
+            return ["", "", ""]
+        except Exception as e:
+            print(f"Error obteniendo feedback: {e}")
+            return ["", "", ""]

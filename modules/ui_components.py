@@ -28,9 +28,9 @@ def render_sidebar():
                 now = datetime.now(user_tz)
                 date_str = now.strftime("%A, %d %b")
                 time_str = now.strftime("%I:%M %p")
-                
-                st.caption(f"📅 {date_str}") 
-                st.caption(f"🕒 {time_str}")
+
+                st.caption(f"📅 {date_str}")
+                st.caption(f"🕒 {time_str} (Hora de ingreso)")
                 st.divider()
             except Exception as e:
                 st.error(f"Error hora: {e}")

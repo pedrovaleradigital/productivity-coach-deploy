@@ -108,6 +108,35 @@ class ProductivityAgent:
         """Construir prompt de contexto para el agente"""
         tracking = context['tracking']
 
+        # Obtener tareas y feedback
+        morning_tasks = tracking.get('identity_1_daily_3_details', [])
+        afternoon_tasks = tracking.get('identity_2_priorities_details', [])
+        morning_feedback = self.db.get_task_feedback("morning")
+        afternoon_feedback = self.db.get_task_feedback("afternoon")
+
+        # Construir sección de tareas con feedback
+        morning_tasks_text = ""
+        if morning_tasks:
+            for i, task in enumerate(morning_tasks):
+                task_text = task.get('text', '') if isinstance(task, dict) else ''
+                if task_text:
+                    fb = morning_feedback[i] if i < len(morning_feedback) else ''
+                    done = '✅' if task.get('done', False) else '⬜'
+                    morning_tasks_text += f"  {done} Tarea {i+1}: {task_text}\n"
+                    if fb:
+                        morning_tasks_text += f"     Feedback: {fb}\n"
+
+        afternoon_tasks_text = ""
+        if afternoon_tasks:
+            for i, task in enumerate(afternoon_tasks):
+                task_text = task.get('text', '') if isinstance(task, dict) else ''
+                if task_text:
+                    fb = afternoon_feedback[i] if i < len(afternoon_feedback) else ''
+                    done = '✅' if task.get('done', False) else '⬜'
+                    afternoon_tasks_text += f"  {done} Tarea {i+1}: {task_text}\n"
+                    if fb:
+                        afternoon_tasks_text += f"     Feedback: {fb}\n"
+
         prompt = f"""
 CONTEXTO ACTUAL:
 - Fecha: {context['date']}
@@ -120,6 +149,12 @@ TRACKING DE HOY:
 - Prioridades tarde completadas: {tracking.get('identity_2_priorities_completed', 0)}/3
 - Código hecho: {'Sí' if tracking.get('code_commit_done') else 'No'}
 - Morning Mastery: {'Sí' if tracking.get('morning_mastery_done') else 'No'}
+
+TAREAS DE MAÑANA (Identidad Empresario):
+{morning_tasks_text if morning_tasks_text else '  Sin tareas definidas'}
+
+TAREAS DE TARDE (Identidad Profesional):
+{afternoon_tasks_text if afternoon_tasks_text else '  Sin tareas definidas'}
 
 RACHA DE CÓDIGO: {context['code_streak']} días
 
@@ -262,3 +297,55 @@ RACHA DE CÓDIGO: {context['code_streak']} días
 
     def update_morning_mastery_text(self, text: str):
         return self.db.update_morning_mastery_text(text)
+
+    def generate_task_feedback(self, tasks: List[Dict], period: str = "morning") -> List[str]:
+        """
+        Generar feedback personalizado para cada tarea.
+        period: 'morning' o 'afternoon'
+        Retorna lista de strings con feedback para cada tarea.
+        """
+        feedbacks = []
+
+        for i, task in enumerate(tasks):
+            task_text = task.get('text', '').strip()
+            if not task_text:
+                feedbacks.append("")
+                continue
+
+            # Construir prompt para analizar la tarea
+            analysis_prompt = f"""Analiza esta tarea y da feedback breve (máximo 2 oraciones):
+
+Tarea: "{task_text}"
+
+Criterios:
+1. Si parece que se puede completar en menos de 30 minutos: felicita porque cumple con ser "ridículamente pequeña" (Mínimo No Negociable).
+2. Si parece que tomará entre 30-60 minutos: sugiere que reserve un espacio sin distracciones para concentrarse.
+3. Si parece que tomará más de 1 hora: sugiere cómo dividirla en partes más pequeñas y cuál hacer primero.
+
+IMPORTANTE:
+- Responde SOLO con el feedback, sin prefijos ni etiquetas
+- Usa máximo 2 oraciones
+- Incluye 1 emoji relevante
+- Sé específico sobre la tarea mencionada"""
+
+            try:
+                response = self.client.messages.create(
+                    model=self.model,
+                    max_tokens=200,
+                    system="Eres un coach de productividad conciso y directo. Responde solo con el feedback solicitado.",
+                    messages=[{"role": "user", "content": analysis_prompt}]
+                )
+                feedback = response.content[0].text.strip()
+                feedbacks.append(feedback)
+            except Exception as e:
+                feedbacks.append(f"No se pudo generar feedback: {e}")
+
+        return feedbacks
+
+    def save_task_feedback(self, feedbacks: List[str], period: str = "morning"):
+        """Guardar feedback en Supabase"""
+        return self.db.save_task_feedback(feedbacks, period)
+
+    def get_task_feedback(self, period: str = "morning") -> List[str]:
+        """Obtener feedback guardado"""
+        return self.db.get_task_feedback(period)

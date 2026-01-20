@@ -54,12 +54,34 @@ if 'db' in st.session_state:
             id2 = st.text_input("Nombre Identidad #2 (Tarde)", value=current_settings.get('identity_2_name', 'Profesional MarTech'))
             
         if st.form_submit_button("Guardar Configuración", use_container_width=True, type="primary"):
+            # Detectar si cambió la timezone
+            old_timezone = current_settings.get('timezone', 'America/Caracas')
+            timezone_changed = (old_timezone != selected_timezone)
+
             success, msg = st.session_state.db.update_user_settings(id1, id2, selected_timezone)
             if success:
                 st.session_state.user_settings = {'identity_1_name': id1, 'identity_2_name': id2, 'timezone': selected_timezone}
-                st.success(msg)
-                time.sleep(1)
-                st.rerun()
+
+                # Si cambió la timezone, limpiar session_state para forzar recarga completa
+                if timezone_changed:
+                    st.session_state.db.set_timezone(selected_timezone)
+                    # Limpiar datos de tracking en memoria para que se recarguen con la nueva fecha
+                    if 'agent' in st.session_state:
+                        del st.session_state['agent']
+                    if 'db' in st.session_state:
+                        del st.session_state['db']
+                    st.success("✅ Zona horaria actualizada. Recargando sistema...")
+                    time.sleep(1.5)
+                    # Usar JavaScript para hacer refresh completo de la página
+                    st.markdown(
+                        """<meta http-equiv="refresh" content="0; url=/" />""",
+                        unsafe_allow_html=True
+                    )
+                    st.stop()
+                else:
+                    st.success(msg)
+                    time.sleep(1)
+                    st.rerun()
             else:
                 st.error(msg)
 else:

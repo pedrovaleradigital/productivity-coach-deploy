@@ -170,7 +170,7 @@ id1_name = user_settings.get('identity_1_name', 'Empresario Exitoso')
 id2_name = user_settings.get('identity_2_name', 'Profesional MarTech')
 
 # Contenido principal
-col1, col2 = st.columns([2, 1])
+col1, col2 = st.columns([3, 1])
 
 with col1:
     st.header("🎯 Tracking Rápido")
@@ -235,8 +235,8 @@ with col1:
         c1, c2 = st.columns([0.05, 0.95])
         
         # Etiqueta especial para Tarea 1 (Eat the frog)
-        label_prefix = "🐸 EAT THE FROG" if i == 0 else f"Tarea {i+1}"
-        placeholder_text = "Tarea que sea Mínimo No Negociable: Versión ridículamente pequeña..." if i == 0 else "Ej: Diseñar oferta..."
+        label_prefix = "Tarea 1 (🐸 EAT THE FROG)" if i == 0 else f"Tarea {i+1}"
+        placeholder_text = "Ej: Diseñar oferta... (Tarea que sea Mínimo No Negociable)"
         
         # Obtener valor actual del input (estado Session State o DB)
         current_text_val = d3_details[i].get('text', '')
@@ -268,8 +268,20 @@ with col1:
         
         d3_inputs.append({"text": text_val, "done": is_done})
 
+    # Mostrar feedback existente debajo de cada tarea
+    morning_feedback = st.session_state.agent.get_task_feedback("morning")
+    for i, fb in enumerate(morning_feedback):
+        if fb and i < len(d3_inputs) and d3_inputs[i].get('text', '').strip():
+            st.markdown(f"""<div style="background-color: #1a3a2a; padding: 10px; border-radius: 8px; margin-bottom: 10px; border-left: 3px solid #4ade80;">
+<span style="color: #4ade80; font-weight: bold;">Productivity Coach:</span> <em style="color: #a7f3d0;">{fb}</em>
+</div>""", unsafe_allow_html=True)
+
     if st.button("Guardar Prioridades Mañana", use_container_width=True):
         st.session_state.db.update_daily_3(d3_inputs)
+        # Generar y guardar feedback
+        with st.spinner("Analizando tareas..."):
+            feedbacks = st.session_state.agent.generate_task_feedback(d3_inputs, "morning")
+            st.session_state.agent.save_task_feedback(feedbacks, "morning")
         st.success("✅ Prioridades guardadas")
         time.sleep(0.5)
         st.rerun()
@@ -299,17 +311,17 @@ with col1:
     p_inputs = []
     for i in range(3):
         c1, c2 = st.columns([0.05, 0.95])
-        
-        label_prefix = "🐸 EAT THE FROG" if i == 0 else f"Tarea {i+1}"
-        
+
+        label_prefix = "Tarea 1 (🐸 EAT THE FROG)" if i == 0 else f"Tarea {i+1}"
+
         current_text_val = p_details[i].get('text', '')
 
         with c2:
             text_val = st.text_input(
-                label_prefix, 
-                value=current_text_val, 
-                key=f"p_text_{i}", 
-                placeholder="Ej: Configurar campaña...",
+                label_prefix,
+                value=current_text_val,
+                key=f"p_text_{i}",
+                placeholder="Ej: Configurar campaña... (Tarea que sea Mínimo No Negociable)",
                 help="[Mínimo No Negociable]: Define la versión ridículamente pequeña de la tarea."
             )
 
@@ -329,8 +341,20 @@ with col1:
         
         p_inputs.append({"text": text_val, "done": is_done})
 
+    # Mostrar feedback existente debajo de cada tarea
+    afternoon_feedback = st.session_state.agent.get_task_feedback("afternoon")
+    for i, fb in enumerate(afternoon_feedback):
+        if fb and i < len(p_inputs) and p_inputs[i].get('text', '').strip():
+            st.markdown(f"""<div style="background-color: #1a3a2a; padding: 10px; border-radius: 8px; margin-bottom: 10px; border-left: 3px solid #4ade80;">
+<span style="color: #4ade80; font-weight: bold;">Productivity Coach:</span> <em style="color: #a7f3d0;">{fb}</em>
+</div>""", unsafe_allow_html=True)
+
     if st.button("Guardar Prioridades Tarde", use_container_width=True):
         st.session_state.db.update_priorities(p_inputs)
+        # Generar y guardar feedback
+        with st.spinner("Analizando tareas..."):
+            feedbacks = st.session_state.agent.generate_task_feedback(p_inputs, "afternoon")
+            st.session_state.agent.save_task_feedback(feedbacks, "afternoon")
         st.success("✅ Prioridades guardadas")
         time.sleep(0.5)
         st.rerun()
@@ -342,8 +366,8 @@ with col1:
     # Se eliminó la sección "Código del Día" del main body en favor del Sidebar Habit List
 
 with col2:
-    st.header("💬 Chat Rápido")
-    st.info("Ve a la página de **Chat** para una conversación completa con el coach")
+    st.header("💬 Consulta aquí")
+    st.markdown("[Ve a la página de **Chat Coach** para una conversación completa](pages/1_💬_Chat_Coach.py)")
 
     quick_message = st.text_area(
         "Mensaje rápido",

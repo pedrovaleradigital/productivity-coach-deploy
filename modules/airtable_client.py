@@ -15,9 +15,9 @@ class AirtableClient:
         self.base = self.api.base(base_id)
 
         # Tablas
-        self.daily_tracking = self.base.table('daily_tracking')
-        self.habit_streaks = self.base.table('habit_streaks')
-        self.identity_sessions = self.base.table('identity_sessions')
+        self.daily_tracking = self.base.table('01_productivity_daily_tracking')
+        self.habit_streaks = self.base.table('01_productivity_habit_streaks')
+        self.identity_sessions = self.base.table('01_productivity_identity_sessions')
 
     def get_today_tracking(self) -> Dict:
         """Obtener tracking del día actual"""

@@ -86,6 +86,14 @@ else:
     identity_emoji = "🚀" if context['identity'] == "Empresario Exitoso" else "💼"
     st.success(f"{identity_emoji} **Identidad activa:** {context['identity']}")
 
+# Mostrar Breadcrumbs de ayer (si existen)
+breadcrumbs_ayer = st.session_state.db.get_breadcrumbs_from_yesterday()
+if breadcrumbs_ayer:
+    st.markdown(f"""<div style="background-color: #1a2a3a; padding: 12px; border-radius: 8px; margin: 10px 0; border-left: 3px solid #60a5fa;">
+<span style="color: #60a5fa; font-weight: bold;">📌 Ayer dejaste preparado:</span><br/>
+<em style="color: #93c5fd;">{breadcrumbs_ayer}</em>
+</div>""", unsafe_allow_html=True)
+
 from modules.ui_components import render_sidebar
 
 # Sidebar
@@ -193,7 +201,11 @@ id2_name = user_settings.get('identity_2_name', 'Profesional MarTech')
 col1, col2 = st.columns([3, 1])
 
 with col1:
-    st.header("⚡ Tracking Rápido")
+    # Obtener fecha en español para el header
+    from modules.ui_components import get_fecha_espanol
+    from datetime import datetime as dt_header
+    dia_es, dia_num, mes_es = get_fecha_espanol(dt_header.now(st.session_state.db.timezone), formato='largo')
+    st.header(f"⚡ Tracking Rápido - {dia_es} {dia_num} {mes_es}")
 
     # CONTEXTO ESTRATÉGICO (Nuevo Expander)
     with st.expander("🧠 Estrategia: Protocolo 3x60 & Diseño Ambiental"):
@@ -397,9 +409,30 @@ with col1:
 
     st.divider()
 
-    # LEGACY: Código movido a Sidebar como hábito dinámico
-    # Mantenemos esto oculto por ahora o lo quitamos para limpiar la UI
-    # Se eliminó la sección "Código del Día" del main body en favor del Sidebar Habit List
+    # --- SECCIÓN BREADCRUMBS: Rutina Nocturna ---
+    st.subheader("🌙 Breadcrumbs para Mañana")
+    st.caption("¿Qué dejaste preparado? Escribe pistas para tu yo de mañana.")
+
+    # Obtener breadcrumbs actuales (si ya escribió algo hoy)
+    current_breadcrumbs = st.session_state.db.get_breadcrumbs_today()
+
+    breadcrumbs_input = st.text_area(
+        "¿Qué dejé preparado para mañana?",
+        value=current_breadcrumbs,
+        placeholder="Ej: Reporte al 80%, solo falta revisar gráficos. Código de login listo para testing.",
+        height=80,
+        key="breadcrumbs_input"
+    )
+
+    if st.button("💾 Guardar Breadcrumbs", use_container_width=True):
+        if st.session_state.db.save_breadcrumbs(breadcrumbs_input):
+            st.success("✅ Breadcrumbs guardados - ¡Los verás mañana!")
+            time.sleep(0.5)
+            st.rerun()
+        else:
+            st.error("Error al guardar breadcrumbs")
+
+    st.divider()
 
 with col2:
     st.header("💬 Consulta aquí")

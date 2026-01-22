@@ -4,12 +4,38 @@ from datetime import datetime
 import pytz
 import os
 
+# Diccionarios para traducción de fechas a español
+DIAS_ES = {
+    'Monday': 'Lunes', 'Tuesday': 'Martes', 'Wednesday': 'Miércoles',
+    'Thursday': 'Jueves', 'Friday': 'Viernes', 'Saturday': 'Sábado', 'Sunday': 'Domingo'
+}
+MESES_ES = {
+    'Jan': 'Ene', 'Feb': 'Feb', 'Mar': 'Mar', 'Apr': 'Abr', 'May': 'May', 'Jun': 'Jun',
+    'Jul': 'Jul', 'Aug': 'Ago', 'Sep': 'Sep', 'Oct': 'Oct', 'Nov': 'Nov', 'Dec': 'Dic'
+}
+MESES_FULL_ES = {
+    'January': 'Enero', 'February': 'Febrero', 'March': 'Marzo', 'April': 'Abril',
+    'May': 'Mayo', 'June': 'Junio', 'July': 'Julio', 'August': 'Agosto',
+    'September': 'Septiembre', 'October': 'Octubre', 'November': 'Noviembre', 'December': 'Diciembre'
+}
+
+def get_fecha_espanol(now, formato='corto'):
+    """Convierte fecha a español. formato='corto' (Ene) o 'largo' (Enero)"""
+    dia_en = now.strftime("%A")
+    mes_en = now.strftime("%B") if formato == 'largo' else now.strftime("%b")
+    dia_num = now.strftime("%d").lstrip('0')  # Sin cero inicial
+
+    dia_es = DIAS_ES.get(dia_en, dia_en)
+    mes_es = MESES_FULL_ES.get(mes_en, mes_en) if formato == 'largo' else MESES_ES.get(mes_en, mes_en)
+
+    return dia_es, dia_num, mes_es
+
 def render_sidebar():
     """Renderiza la barra lateral común con navegación y estado de usuario"""
-    
+
     # Si no hay auth, no mostrar nada (o mostrar login si se desea, pero app.py maneja el login principal)
     # Asumimos que la página que llama a esto ya verificó auth o es el login
-    
+
     with st.sidebar:
         st.header("Productivity Coach")
 
@@ -22,11 +48,14 @@ def render_sidebar():
             elif 'db' in st.session_state:
                  # Intentar cargar si no esta en session (aunque Settings lo carga)
                  pass
-            
+
             try:
                 user_tz = pytz.timezone(tz_name)
                 now = datetime.now(user_tz)
-                date_str = now.strftime("%A, %d %b")
+
+                # Fecha en español
+                dia_es, dia_num, mes_es = get_fecha_espanol(now, formato='corto')
+                date_str = f"{dia_es}, {dia_num} {mes_es}"
                 time_str = now.strftime("%I:%M %p")
 
                 st.caption(f"📅 {date_str}")

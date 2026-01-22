@@ -38,7 +38,7 @@ class SupabaseClient:
 
         try:
             # Buscar registro de hoy para este usuario
-            response = self.client.table('daily_tracking').select('*')\
+            response = self.client.table('01_productivity_daily_tracking').select('*')\
                 .eq('date', today)\
                 .eq('user_id', self.user_id)\
                 .execute()
@@ -57,7 +57,7 @@ class SupabaseClient:
                     'morning_mastery_done': False
                 }
 
-                response = self.client.table('daily_tracking').insert(new_record).execute()
+                response = self.client.table('01_productivity_daily_tracking').insert(new_record).execute()
                 return response.data[0] if response.data else new_record
 
         except Exception as e:
@@ -85,7 +85,7 @@ class SupabaseClient:
             self.get_today_tracking()
 
             # Actualizar columnas nuevas (JSON) y viejas (Legacy para dashboard)
-            self.client.table('daily_tracking').update({
+            self.client.table('01_productivity_daily_tracking').update({
                 'identity_1_daily_3_details': tasks_data,     # Nueva Logica
                 'identity_1_daily_3_completed': completed_count, # Legacy Compat
                 'identity_1_daily_3_list': text_list          # Legacy Compat
@@ -110,7 +110,7 @@ class SupabaseClient:
             self.get_today_tracking()
 
             # Actualizar
-            self.client.table('daily_tracking').update({
+            self.client.table('01_productivity_daily_tracking').update({
                 'identity_2_priorities_details': priorities_data,       # Nueva Logica
                 'identity_2_priorities_completed': completed_count,     # Legacy Compat
                 'identity_2_priorities_list': text_list                 # Legacy Compat
@@ -132,7 +132,7 @@ class SupabaseClient:
             self.get_today_tracking()
 
             # Actualizar
-            self.client.table('daily_tracking').update({
+            self.client.table('01_productivity_daily_tracking').update({
                 'code_commit_done': True,
                 'code_commit_time': commit_time
             }).eq('date', today).eq('user_id', self.user_id).execute()
@@ -153,7 +153,7 @@ class SupabaseClient:
             self.get_today_tracking()
 
             # Actualizar
-            self.client.table('daily_tracking').update({
+            self.client.table('01_productivity_daily_tracking').update({
                 'morning_mastery_done': True
             }).eq('date', today).eq('user_id', self.user_id).execute()
 
@@ -163,7 +163,7 @@ class SupabaseClient:
     def get_code_streak(self) -> int:
         """Obtener racha actual de código"""
         try:
-            response = self.client.table('habit_streaks').select('*')\
+            response = self.client.table('01_productivity_habit_streaks').select('*')\
                 .eq('habit_name', 'Código')\
                 .eq('user_id', self.user_id)\
                 .execute()
@@ -180,7 +180,7 @@ class SupabaseClient:
                     'total_completions': 0,
                     'consistency_rate': 0.0
                 }
-                self.client.table('habit_streaks').insert(new_record).execute()
+                self.client.table('01_productivity_habit_streaks').insert(new_record).execute()
                 return 0
 
         except Exception as e:
@@ -190,7 +190,7 @@ class SupabaseClient:
     def _update_code_streak(self):
         """Actualizar racha de código (interno)"""
         try:
-            response = self.client.table('habit_streaks').select('*')\
+            response = self.client.table('01_productivity_habit_streaks').select('*')\
                 .eq('habit_name', 'Código')\
                 .eq('user_id', self.user_id)\
                 .execute()
@@ -204,7 +204,7 @@ class SupabaseClient:
                 new_streak = current_streak + 1
                 new_longest = max(new_streak, longest_streak)
 
-                self.client.table('habit_streaks').update({
+                self.client.table('01_productivity_habit_streaks').update({
                     'current_streak': new_streak,
                     'longest_streak': new_longest,
                     'last_activity_date': self._get_today_iso(),
@@ -213,7 +213,7 @@ class SupabaseClient:
                 }).eq('habit_name', 'Código').eq('user_id', self.user_id).execute()
             else:
                 # Si no existe, crear registro inicial (Racha = 1 porque acabamos de cumplir)
-                self.client.table('habit_streaks').insert({
+                self.client.table('01_productivity_habit_streaks').insert({
                     'user_id': self.user_id,
                     'habit_name': 'Código',
                     'current_streak': 1,
@@ -230,7 +230,7 @@ class SupabaseClient:
     def log_conversation(self, identity: Optional[str], messages: List[Dict]):
         """Guardar conversación en Supabase"""
         try:
-            self.client.table('identity_sessions').insert({
+            self.client.table('01_productivity_identity_sessions').insert({
                 'user_id': self.user_id,
                 'identity_active': identity if identity else 'Fin de semana',
                 'conversation_log': messages,
@@ -243,7 +243,7 @@ class SupabaseClient:
     def log_focus_session(self, task_name: str, timer_type: str, duration_minutes: int):
         """Guardar sesión de focus timer"""
         try:
-            self.client.table('focus_sessions').insert({
+            self.client.table('01_productivity_focus_sessions').insert({
                 'user_id': self.user_id,
                 'task_name': task_name,
                 'timer_type': timer_type,
@@ -263,7 +263,7 @@ class SupabaseClient:
 
 
         try:
-            response = self.client.table('focus_sessions').select('*')\
+            response = self.client.table('01_productivity_focus_sessions').select('*')\
                 .eq('date', today)\
                 .eq('user_id', self.user_id)\
                 .order('completed_at', desc=True)\
@@ -288,7 +288,7 @@ class SupabaseClient:
             start_date = (today_date - timedelta(days=6)).isoformat()
 
 
-            response = self.client.table('daily_tracking').select('*')\
+            response = self.client.table('01_productivity_daily_tracking').select('*')\
                 .gte('date', start_date)\
                 .eq('user_id', self.user_id)\
                 .execute()
@@ -336,7 +336,7 @@ class SupabaseClient:
             start_date = (today_date - timedelta(days=days-1)).isoformat()
 
 
-            response = self.client.table('daily_tracking').select('*')\
+            response = self.client.table('01_productivity_daily_tracking').select('*')\
                 .gte('date', start_date)\
                 .eq('user_id', self.user_id)\
                 .order('date', desc=False)\
@@ -352,7 +352,7 @@ class SupabaseClient:
         """Obtener conversaciones recientes para rehidratar memoria"""
         try:
             # Traer las últimas N sesiones
-            response = self.client.table('identity_sessions')\
+            response = self.client.table('01_productivity_identity_sessions')\
                 .select('conversation_log')\
                 .eq('user_id', self.user_id)\
                 .order('start_time', desc=True)\
@@ -381,7 +381,7 @@ class SupabaseClient:
     def get_user_settings(self) -> Dict:
         """Obtener configuración de identidades del usuario"""
         try:
-            response = self.client.table('user_settings').select('*')\
+            response = self.client.table('01_productivity_user_settings').select('*')\
                 .eq('user_id', self.user_id)\
                 .execute()
             
@@ -419,7 +419,7 @@ class SupabaseClient:
                 data['timezone'] = timezone
 
             # Upsert (Insert or Update)
-            self.client.table('user_settings').upsert(data).execute()
+            self.client.table('01_productivity_user_settings').upsert(data).execute()
             return True, "Configuración guardada"
         except Exception as e:
             print(f"Error actualizando settings: {e}")
@@ -435,7 +435,7 @@ class SupabaseClient:
             if len(current_habits) >= 3:
                 return False, "Límite de 3 hábitos alcanzado"
 
-            self.client.table('habits').insert({
+            self.client.table('01_productivity_habits').insert({
                 'user_id': self.user_id,
                 'name': name,
                 'streak_count': 0,
@@ -449,7 +449,7 @@ class SupabaseClient:
     def get_habits(self) -> List[Dict]:
         """Obtener todos los hábitos activos del usuario"""
         try:
-            response = self.client.table('habits').select('*')\
+            response = self.client.table('01_productivity_habits').select('*')\
                 .eq('user_id', self.user_id)\
                 .eq('active', True)\
                 .order('created_at', desc=False)\
@@ -464,7 +464,7 @@ class SupabaseClient:
         try:
             # Nota: El usuario pidió que si cambia el hábito, se reinicie el contador.
             # En esta implementación asumiremos que cambiar el nombre ES cambiar el hábito.
-            self.client.table('habits').update({
+            self.client.table('01_productivity_habits').update({
                 'name': name,
                 'streak_count': 0, # Reset forzado por cambio de contexto
                 'last_completed_at': None 
@@ -477,7 +477,7 @@ class SupabaseClient:
     def delete_habit(self, habit_id: str) -> bool:
         """Eliminar hábito (soft delete o hard delete)"""
         try:
-            self.client.table('habits').delete().eq('id', habit_id).eq('user_id', self.user_id).execute()
+            self.client.table('01_productivity_habits').delete().eq('id', habit_id).eq('user_id', self.user_id).execute()
             return True
         except Exception as e:
             print(f"Error eliminando hábito: {e}")
@@ -486,7 +486,7 @@ class SupabaseClient:
     def mark_habit_done(self, habit_id: str) -> Dict:
         """Marcar hábito como hecho hoy y actualizar racha"""
         try:
-            habit_response = self.client.table('habits').select('*').eq('id', habit_id).single().execute()
+            habit_response = self.client.table('01_productivity_habits').select('*').eq('id', habit_id).single().execute()
             habit = habit_response.data
             
             if not habit:
@@ -527,14 +527,14 @@ class SupabaseClient:
 
             # Actualizar hábito
             now_iso = datetime.now(self.timezone).isoformat()
-            self.client.table('habits').update({
+            self.client.table('01_productivity_habits').update({
 
                 'streak_count': new_streak,
                 'last_completed_at': now_iso
             }).eq('id', habit_id).execute()
 
             # Loggear historial (opcional pero recomendado)
-            self.client.table('habit_logs').insert({
+            self.client.table('01_productivity_habit_logs').insert({
                 'habit_id': habit_id,
                 'user_id': self.user_id,
                 'completed_at': now_iso,
@@ -556,7 +556,7 @@ class SupabaseClient:
             
             # Ajuste de query, asegurando formato de fecha sin hora si es 'date_logged' es date
             # Ojo: date_logged se guarda con _get_today_iso() que es string YYYY-MM-DD
-            response = self.client.table('habit_logs').select('*')\
+            response = self.client.table('01_productivity_habit_logs').select('*')\
                 .gte('date_logged', start_date)\
                 .eq('user_id', self.user_id)\
                 .execute()
@@ -576,7 +576,7 @@ class SupabaseClient:
     def update_morning_mastery_text(self, text: str) -> bool:
         """Actualizar texto de Morning Mastery"""
         try:
-            self.client.table('user_settings').upsert({
+            self.client.table('01_productivity_user_settings').upsert({
                 'user_id': self.user_id,
                 'morning_mastery_text': text,
                 'updated_at': datetime.now().isoformat()
@@ -595,7 +595,7 @@ class SupabaseClient:
 
         try:
             self.get_today_tracking()  # Asegurar que existe el registro
-            self.client.table('daily_tracking').update({
+            self.client.table('01_productivity_daily_tracking').update({
                 column_name: feedbacks
             }).eq('date', today).eq('user_id', self.user_id).execute()
             return True
@@ -609,7 +609,7 @@ class SupabaseClient:
         column_name = 'identity_1_feedback' if period == 'morning' else 'identity_2_feedback'
 
         try:
-            response = self.client.table('daily_tracking').select(column_name)\
+            response = self.client.table('01_productivity_daily_tracking').select(column_name)\
                 .eq('date', today)\
                 .eq('user_id', self.user_id)\
                 .execute()
@@ -621,3 +621,54 @@ class SupabaseClient:
         except Exception as e:
             print(f"Error obteniendo feedback: {e}")
             return ["", "", ""]
+
+    # --- BREADCRUMBS METHODS ---
+
+    def save_breadcrumbs(self, breadcrumbs_text: str) -> bool:
+        """Guardar breadcrumbs para mañana en el registro de hoy"""
+        today = self._get_today_iso()
+
+        try:
+            self.get_today_tracking()  # Asegurar que existe el registro
+            self.client.table('01_productivity_daily_tracking').update({
+                'breadcrumbs_tomorrow': breadcrumbs_text
+            }).eq('date', today).eq('user_id', self.user_id).execute()
+            return True
+        except Exception as e:
+            print(f"Error guardando breadcrumbs: {e}")
+            return False
+
+    def get_breadcrumbs_today(self) -> str:
+        """Obtener breadcrumbs de hoy (lo que escribí hoy para mañana)"""
+        today = self._get_today_iso()
+
+        try:
+            response = self.client.table('01_productivity_daily_tracking').select('breadcrumbs_tomorrow')\
+                .eq('date', today)\
+                .eq('user_id', self.user_id)\
+                .execute()
+
+            if response.data and len(response.data) > 0:
+                return response.data[0].get('breadcrumbs_tomorrow', '') or ''
+            return ''
+        except Exception as e:
+            print(f"Error obteniendo breadcrumbs de hoy: {e}")
+            return ''
+
+    def get_breadcrumbs_from_yesterday(self) -> str:
+        """Obtener breadcrumbs que escribí ayer (para mostrar hoy en la mañana)"""
+        try:
+            today_date = datetime.now(self.timezone).date()
+            yesterday = (today_date - timedelta(days=1)).isoformat()
+
+            response = self.client.table('01_productivity_daily_tracking').select('breadcrumbs_tomorrow')\
+                .eq('date', yesterday)\
+                .eq('user_id', self.user_id)\
+                .execute()
+
+            if response.data and len(response.data) > 0:
+                return response.data[0].get('breadcrumbs_tomorrow', '') or ''
+            return ''
+        except Exception as e:
+            print(f"Error obteniendo breadcrumbs de ayer: {e}")
+            return ''

@@ -139,7 +139,27 @@ with st.sidebar:
             # Check si ya se completó hoy (usando last_completed_at)
             is_done_today = False
             if habit.get('last_completed_at'):
-                last_date = habit['last_completed_at'].split('T')[0] # Simple date check
+                try:
+                    # Convertir timestamp a zona horaria del usuario antes de comparar
+                    from datetime import datetime as dt_module
+                    last_completed_str = habit['last_completed_at']
+                    # Parsear el timestamp ISO
+                    if 'Z' in last_completed_str:
+                        last_completed_dt = dt_module.fromisoformat(last_completed_str.replace('Z', '+00:00'))
+                    elif '+' in last_completed_str or last_completed_str.count('-') > 2:
+                        last_completed_dt = dt_module.fromisoformat(last_completed_str)
+                    else:
+                        # Formato simple sin timezone, asumir timezone del usuario
+                        last_completed_dt = dt_module.fromisoformat(last_completed_str)
+                        last_completed_dt = st.session_state.db.timezone.localize(last_completed_dt)
+
+                    # Convertir a zona horaria del usuario
+                    last_completed_local = last_completed_dt.astimezone(st.session_state.db.timezone)
+                    last_date = last_completed_local.strftime('%Y-%m-%d')
+                except Exception as e:
+                    # Fallback al método simple si hay error
+                    last_date = habit['last_completed_at'].split('T')[0]
+
                 if last_date == context['date']:
                     is_done_today = True
             

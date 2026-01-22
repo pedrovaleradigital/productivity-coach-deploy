@@ -496,12 +496,20 @@ class SupabaseClient:
             last_completed_str = habit.get('last_completed_at')
             
             if last_completed_str:
-                # Truncar zona horaria si viene en formato Z simple o manejarlo mejor
-                # Simplificación: Convertir la fecha string a fecha (ignorando hora exacta para calculo de dias)
+                # Convertir timestamp a zona horaria del usuario antes de comparar fechas
                 try:
-                    last_date_dt = datetime.fromisoformat(last_completed_str.replace('Z', '+00:00'))
-                    # Ajustar a zona horaria del usuario si fuera necesario, pero la fecha simple basta
-                    last_date = last_date_dt.date()
+                    if 'Z' in last_completed_str:
+                        last_date_dt = datetime.fromisoformat(last_completed_str.replace('Z', '+00:00'))
+                    elif '+' in last_completed_str or last_completed_str.count('-') > 2:
+                        last_date_dt = datetime.fromisoformat(last_completed_str)
+                    else:
+                        # Formato simple sin timezone, asumir timezone del usuario
+                        last_date_dt = datetime.fromisoformat(last_completed_str)
+                        last_date_dt = self.timezone.localize(last_date_dt)
+
+                    # Convertir a zona horaria del usuario y extraer fecha
+                    last_date_local = last_date_dt.astimezone(self.timezone)
+                    last_date = last_date_local.date()
                 except:
                     last_date = datetime.fromisoformat(last_completed_str).date()
 
@@ -533,8 +541,6 @@ class SupabaseClient:
                 'date_logged': self._get_today_iso()
 
             }).execute()
-
-            return {'success': True, 'streak': new_streak, 'message': f'¡Racha: {new_streak} días!'}
 
             return {'success': True, 'streak': new_streak, 'message': f'¡Racha: {new_streak} días!'}
 

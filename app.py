@@ -86,13 +86,15 @@ else:
     identity_emoji = "🚀" if context['identity'] == "Empresario Exitoso" else "💼"
     st.success(f"{identity_emoji} **Identidad activa:** {context['identity']}")
 
-# Mostrar Breadcrumbs de ayer (si existen)
+# Mostrar Breadcrumbs de ayer (si existen) - Colapsable
 breadcrumbs_ayer = st.session_state.db.get_breadcrumbs_from_yesterday()
 if breadcrumbs_ayer:
-    st.markdown(f"""<div style="background-color: #1a2a3a; padding: 12px; border-radius: 8px; margin: 10px 0; border-left: 3px solid #60a5fa;">
-<span style="color: #60a5fa; font-weight: bold;">📌 Ayer dejaste preparado:</span><br/>
-<em style="color: #93c5fd;">{breadcrumbs_ayer}</em>
-</div>""", unsafe_allow_html=True)
+    st.markdown(f"""<details style="background-color: #1a2a3a; padding: 12px; border-radius: 8px; margin: 10px 0; border-left: 3px solid #60a5fa;">
+<summary style="color: #60a5fa; font-weight: bold; cursor: pointer; list-style: none;">
+    <span>📌 Ayer dejaste preparado (clic para ver)</span>
+</summary>
+<div style="color: #93c5fd; margin-top: 10px; white-space: pre-line; font-style: italic;">{breadcrumbs_ayer}</div>
+</details>""", unsafe_allow_html=True)
 
 from modules.ui_components import render_sidebar
 
